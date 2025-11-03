@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment and Configuration
+.env
+*.env
+!.env.example
+
+# Data Files
+contacts.csv
+!contacts.csv.example
+
+# Logs
+logs/
+*.log
+
+# Progress Files
+progress.json
+*.json.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+.playwright/
+playwright-report/
+test-results/
