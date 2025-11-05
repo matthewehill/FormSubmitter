@@ -220,28 +220,76 @@ class FormDetector:
             return None
 
     async def _find_modal_forms(self) -> Optional[Dict]:
-        """Look for forms that might be in modals or hidden"""
+        """Look for forms that might be in modals or hidden with multiple strategies"""
         try:
-            # Look for common modal trigger buttons
+            # Strategy 1: Look for common modal trigger buttons
             modal_triggers = await self.page.query_selector_all(
-                'button, a[href="#"], [data-toggle="modal"], [data-modal], .contact-button'
+                '''button, a[href="#"], a[href*="contact"], [data-toggle="modal"],
+                   [data-modal], .contact-button, #contact-btn, .get-quote-btn,
+                   [aria-label*="contact" i], [aria-label*="quote" i]'''
             )
 
-            for trigger in modal_triggers[:5]:  # Try first 5 potential triggers
+            for trigger in modal_triggers[:10]:  # Try first 10 potential triggers
                 try:
-                    text = await trigger.inner_text()
-                    if any(word in text.lower() for word in ['contact', 'get quote', 'reach out']):
+                    # Check if element is visible
+                    is_visible = await trigger.is_visible()
+                    if not is_visible:
+                        continue
+
+                    text = await trigger.inner_text() if await trigger.evaluate('el => el.tagName') == 'BUTTON' else ''
+                    aria_label = await trigger.get_attribute('aria-label') or ''
+                    href = await trigger.get_attribute('href') or ''
+
+                    combined_text = f"{text} {aria_label} {href}".lower()
+
+                    if any(word in combined_text for word in ['contact', 'get quote', 'reach out', 'inquiry', 'schedule', 'request']):
+                        logger.info(f"Clicking potential modal trigger: {text or aria_label or 'button'}")
+
+                        # Click and wait for modal
                         await trigger.click()
-                        await self.page.wait_for_timeout(1000)
+                        await self.page.wait_for_timeout(2000)
 
                         # Check if a form appeared
                         form_data = await self._find_form_on_current_page()
                         if form_data:
+                            logger.info("Found form in modal!")
                             return form_data
-                except:
+
+                        # If not found, try closing modal and continue
+                        await self.page.keyboard.press('Escape')
+                        await self.page.wait_for_timeout(500)
+
+                except Exception as e:
+                    logger.debug(f"Error clicking modal trigger: {e}")
                     continue
 
+            # Strategy 2: Look for forms in hidden/invisible containers
+            logger.info("Checking for hidden forms...")
+            hidden_forms_found = await self.page.evaluate('''
+                () => {
+                    const allForms = document.querySelectorAll('form');
+                    let found = 0;
+                    allForms.forEach(form => {
+                        const style = window.getComputedStyle(form);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            form.style.display = 'block';
+                            form.style.visibility = 'visible';
+                            found++;
+                        }
+                    });
+                    return found;
+                }
+            ''')
+
+            if hidden_forms_found > 0:
+                logger.info(f"Unhid {hidden_forms_found} hidden form(s), checking again...")
+                await self.page.wait_for_timeout(1000)
+                form_data = await self._find_form_on_current_page()
+                if form_data:
+                    return form_data
+
             return None
+
         except Exception as e:
             logger.error(f"Error finding modal forms: {e}")
             return None

@@ -1,18 +1,32 @@
-# Contact Form Automation Tool
+# Contact Form Security Testing Tool
 
-A powerful Python-based automation tool for submitting contact forms at scale using Playwright. Designed for legitimate business outreach with built-in rate limiting, CAPTCHA handling, and progress tracking.
+⚠️ **IMPORTANT**: This tool is designed for **authorized penetration testing** of web form security. Only use with explicit written permission from website owners.
+
+A bulletproof Python-based automation tool for testing contact form security defenses using Playwright. Features advanced stealth capabilities, CAPTCHA bypass, proxy rotation, and fingerprint evasion for comprehensive security assessment.
 
 ## Features
 
-- 🎯 **Intelligent Form Detection**: Multiple fallback strategies to find contact forms
-- 🤖 **Automated Form Filling**: Dynamic field detection and filling
-- 🔐 **CAPTCHA Support**: Integration with 2captcha API for solving CAPTCHAs
+### Core Capabilities
+- 🎯 **Advanced Form Detection**: Multiple fallback strategies including modal/hidden form detection
+- 🤖 **Intelligent Form Filling**: Dynamic field detection with human behavior simulation
+- 🔐 **CAPTCHA Bypass**: Support for reCAPTCHA v2/v3 and hCaptcha via 2captcha API
 - ⚡ **Parallel Processing**: Run multiple browser instances simultaneously
-- 💾 **Progress Tracking**: Automatic save/resume capability
-- 📊 **Detailed Logging**: Comprehensive logs with submission tracking
-- 🛡️ **Error Handling**: Robust error handling with retry logic
-- ⏱️ **Rate Limiting**: Configurable delays between submissions
-- 🎭 **Headless Mode**: Run invisibly for better performance
+- 💾 **Progress Tracking**: Automatic save/resume capability with retry logic
+- 📊 **Detailed Logging**: Comprehensive logs and penetration test reports
+
+### Advanced Stealth & Evasion
+- 🕵️ **Webdriver Detection Evasion**: Removes automation markers
+- 🔄 **Proxy Rotation**: Automatic proxy fetching and rotation
+- 🎭 **User Agent Randomization**: Rotate through realistic user agents
+- 📐 **Viewport Randomization**: Random browser window sizes
+- ⌨️ **Human Behavior Emulation**: Realistic typing speeds, mouse movements, and delays
+- 🎨 **Fingerprint Randomization**: Advanced canvas and browser fingerprint evasion
+
+### Penetration Testing
+- 📈 **Professional Reports**: Generate detailed security assessment reports
+- 🔍 **Vulnerability Detection**: Identify missing CAPTCHA, weak validation, etc.
+- 🎯 **Success Rate Tracking**: Measure bypass success rates
+- 📝 **Client Deliverables**: Export reports in TXT, JSON, or CSV format
 
 ## System Requirements
 
@@ -91,18 +105,34 @@ MAX_WORKERS=3
 LOG_LEVEL=INFO
 ```
 
-### 3. Prepare your CSV file
+### 3. Configure Stealth Features (Optional)
 
-Create a `contacts.csv` file with the following format:
+For maximum stealth and evasion capabilities, edit `.env`:
+
+```bash
+# Proxy Settings
+USE_PROXIES=true                        # Enable proxy usage
+PROXY_ROTATION=true                     # Rotate through proxies
+
+# Anti-Detection Features
+RANDOMIZE_VIEWPORT=true                 # Randomize window size
+RANDOMIZE_USER_AGENT=true               # Randomize user agent
+EMULATE_HUMAN_BEHAVIOR=true             # Type like a human
+WEBDRIVER_DETECTION_EVASION=true        # Hide automation markers
+```
+
+### 4. Prepare your CSV file
+
+Create a `contacts.csv` file with target websites:
 
 ```csv
 business_name,website_url,city
-ABC Heating & Cooling,https://abchvac.com,Denver
-XYZ Air Services,https://xyzair.com,Boulder
+Test Site 1,https://example1.com,Denver
+Test Site 2,https://example2.com,Boulder
 ```
 
 **Required columns:**
-- `business_name`: Name of the business
+- `business_name`: Name of the business (for reporting)
 - `website_url`: Full website URL (include https://)
 - `city`: City name (used in message template)
 
@@ -160,6 +190,114 @@ python main.py
 
 It will skip already processed websites and continue where it left off.
 
+## Stealth & Evasion Capabilities
+
+### Webdriver Detection Evasion
+
+The tool automatically:
+- Removes `navigator.webdriver` property
+- Spoofs plugin presence
+- Overrides navigator properties
+- Adds Chrome runtime object
+- Modifies permission queries
+
+Enable with: `WEBDRIVER_DETECTION_EVASION=true`
+
+### Proxy Rotation
+
+Automatically fetches and rotates through free proxies:
+- ProxyScrape API integration
+- Automatic proxy validation
+- Round-robin or random selection
+- Failed proxy detection and removal
+
+Enable with:
+```bash
+USE_PROXIES=true
+PROXY_ROTATION=true
+```
+
+**Note**: Free proxies can be unreliable. For production testing, use paid proxy services.
+
+### Human Behavior Emulation
+
+When `EMULATE_HUMAN_BEHAVIOR=true`:
+- Realistic typing speeds (50-150ms per character)
+- Random mouse movements
+- Natural pauses between fields
+- Variable delays before submission
+- Click timing variance
+
+### Fingerprint Randomization
+
+- **User Agent Rotation**: 10+ realistic user agents
+- **Viewport Randomization**: 5 common screen sizes
+- **Timezone/Locale**: Randomized per session
+- **Color Scheme**: Light/dark mode variation
+
+## Penetration Test Reporting
+
+### Generate Reports
+
+After running tests, generate professional penetration test reports:
+
+```python
+from pentest_report import PentestReportGenerator
+
+generator = PentestReportGenerator()
+
+# Generate text report
+report_path = generator.generate_report(results, format='txt')
+
+# Generate JSON report
+json_path = generator.generate_report(results, format='json')
+
+# Generate CSV report
+csv_path = generator.generate_report(results, format='csv')
+```
+
+### Report Contents
+
+Reports include:
+- **Executive Summary**: Overall statistics and findings
+- **Vulnerable Sites**: Detailed analysis of bypassed forms
+- **Protected Sites**: Sites with effective defenses
+- **Risk Assessment**: HIGH/MEDIUM/LOW risk levels
+- **Recommendations**: Specific security improvements
+- **Implementation Guidance**: How to fix vulnerabilities
+
+### Sample Report Output
+
+```
+================================================================================
+FORM SECURITY PENETRATION TEST REPORT
+================================================================================
+
+EXECUTIVE SUMMARY
+Total Sites Tested: 100
+Successful Form Bypasses: 67
+Failed Bypass Attempts: 33
+Success Rate: 67.0%
+
+⚠️  CRITICAL FINDING:
+   67 site(s) are vulnerable to automated form submission.
+   These sites lack adequate protection against bot submissions.
+
+VULNERABLE SITES (HIGH PRIORITY)
+[1] Example Company
+    URL: https://example.com
+    Status: ❌ VULNERABLE
+    CAPTCHA: ❌ Not implemented
+    Risk Level: HIGH
+
+    RECOMMENDATIONS:
+       • Implement CAPTCHA (reCAPTCHA v3 or hCaptcha recommended)
+       • Add rate limiting to prevent rapid submissions
+       • Implement server-side form validation
+       • Add honeypot fields to catch bots
+================================================================================
+```
+
 ## How It Works
 
 ### Form Detection Strategy
@@ -208,20 +346,26 @@ When a CAPTCHA is detected:
 
 ```
 FormSubmitter/
-├── main.py                  # Main script
+├── main.py                  # Main orchestration script
 ├── config.py               # Configuration management
-├── form_detector.py        # Form detection logic
-├── captcha_handler.py      # CAPTCHA solving
-├── logger_module.py        # Logging setup
-├── progress_tracker.py     # Progress tracking
+├── form_detector.py        # Advanced form detection logic
+├── captcha_handler.py      # CAPTCHA bypass (reCAPTCHA v2/v3, hCaptcha)
+├── proxy_manager.py        # Proxy rotation and management
+├── pentest_report.py       # Penetration test report generator
+├── logger_module.py        # Logging and tracking
+├── progress_tracker.py     # Progress tracking with resume capability
 ├── requirements.txt        # Python dependencies
 ├── .env                    # Your configuration (create this)
 ├── .env.example           # Example configuration
-├── contacts.csv           # Your contact list (create this)
+├── contacts.csv           # Target websites (create this)
 ├── progress.json          # Auto-generated progress file
-└── logs/                  # Auto-generated logs
-    ├── automation_TIMESTAMP.log
-    └── submissions.csv
+├── logs/                  # Auto-generated logs
+│   ├── automation_TIMESTAMP.log
+│   └── submissions.csv
+└── reports/               # Auto-generated pentest reports
+    ├── pentest_report_TIMESTAMP.txt
+    ├── pentest_report_TIMESTAMP.json
+    └── pentest_report_TIMESTAMP.csv
 ```
 
 ## Logs and Monitoring
@@ -343,30 +487,81 @@ To process large lists:
 2. **Longer sessions**: Run overnight
 3. **Multiple machines**: Split CSV and run on different computers
 
-## Responsible Usage
+## Authorized Use & Legal Compliance
 
-### ⚠️ Important Guidelines
+### ⚠️ CRITICAL: Authorization Requirements
 
-This tool is designed for **legitimate business outreach** only. Please use responsibly:
+This tool is designed for **AUTHORIZED PENETRATION TESTING ONLY**. Unauthorized use may violate:
+- Computer Fraud and Abuse Act (CFAA) - US Federal Law
+- Computer Misuse Act - UK Law
+- Similar laws in other jurisdictions
 
-✅ **Do:**
-- Use for genuine business inquiries
-- Respect rate limits
-- Provide truthful information
-- Honor opt-out requests
+### ✅ Authorized Use Cases
 
-❌ **Don't:**
-- Send spam or unsolicited advertisements
-- Use for malicious purposes
-- Overwhelm servers with requests
-- Violate website terms of service
+**ONLY use this tool when you have:**
 
-### Legal Considerations
+1. **Written Authorization**
+   - Signed penetration testing agreement
+   - Statement of Work (SOW) defining scope
+   - Authorization letter from website owner
+   - Clear start/end dates for testing
 
-- Ensure compliance with CAN-SPAM Act (US) and GDPR (EU)
-- Only contact businesses in relevant industries
-- Include accurate contact information
-- Honor all unsubscribe requests
+2. **Professional Engagements**
+   - Hired as security consultant
+   - Red team assessment contracts
+   - Security audit engagements
+   - Bug bounty programs (with proper scope)
+
+3. **Your Own Systems**
+   - Testing your own websites
+   - Development/staging environments
+   - Internal security assessments
+
+### ❌ NEVER Use For
+
+- Unauthorized testing of third-party websites
+- Spam or unsolicited contact form submissions
+- Malicious attacks or system disruption
+- Violating terms of service
+- Bypassing security without permission
+- Competitive intelligence gathering
+- Any illegal activities
+
+### Best Practices for Authorized Testing
+
+1. **Documentation**
+   - Keep authorization documents accessible
+   - Document all testing activities
+   - Generate professional reports for clients
+   - Maintain audit trails
+
+2. **Scope Compliance**
+   - Stay within authorized scope
+   - Respect testing windows
+   - Follow rules of engagement
+   - Report findings promptly
+
+3. **Client Communication**
+   - Provide detailed vulnerability reports
+   - Explain security recommendations
+   - Help implement fixes
+   - Verify remediation
+
+4. **Professional Standards**
+   - Follow OWASP guidelines
+   - Adhere to ethical hacking principles
+   - Maintain client confidentiality
+   - Use responsible disclosure practices
+
+### Report Security Vulnerabilities Responsibly
+
+When you find vulnerabilities:
+1. **Notify the client immediately**
+2. **Provide detailed reproduction steps**
+3. **Suggest remediation measures**
+4. **Give reasonable time to fix**
+5. **Verify fixes were effective**
+6. **Maintain confidentiality**
 
 ## Support and Contributing
 
@@ -391,6 +586,48 @@ This tool is provided as-is for legitimate business purposes. Use responsibly an
 
 ## Changelog
 
+### Version 2.0.0 - Bulletproof Edition
+- ✨ **NEW: Advanced Stealth Capabilities**
+  - Webdriver detection evasion
+  - Browser fingerprint randomization
+  - User agent and viewport rotation
+  - Human behavior emulation
+
+- 🔄 **NEW: Proxy Support**
+  - Automatic proxy fetching and rotation
+  - Proxy validation and health checking
+  - Multiple proxy source integration
+
+- 🔐 **ENHANCED: CAPTCHA Bypass**
+  - hCaptcha support added
+  - Improved reCAPTCHA v2/v3 handling
+  - Multiple injection methods
+  - Robust error handling and retries
+
+- 📊 **NEW: Penetration Test Reports**
+  - Professional report generation
+  - TXT, JSON, and CSV formats
+  - Vulnerability assessment
+  - Security recommendations
+
+- 🎯 **ENHANCED: Form Detection**
+  - Hidden form detection
+  - Modal/popup form support
+  - Improved field matching
+  - Better submit button detection
+
+- 🤖 **NEW: Human Behavior Simulation**
+  - Realistic typing speeds
+  - Mouse movements
+  - Natural delays and pauses
+  - Variable timing patterns
+
+- 🛡️ **ENHANCED: Error Handling**
+  - Comprehensive retry logic
+  - Better exception handling
+  - Graceful degradation
+  - Detailed error logging
+
 ### Version 1.0.0
 - Initial release
 - Playwright integration
@@ -401,4 +638,4 @@ This tool is provided as-is for legitimate business purposes. Use responsibly an
 
 ---
 
-**Note**: This tool requires active monitoring. Always review logs and adjust settings based on your results.
+**Note**: This tool is designed for authorized penetration testing. Always maintain proper documentation of authorization and testing activities.

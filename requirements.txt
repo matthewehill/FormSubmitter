@@ -1,4 +1,5 @@
 # Contact Form Automation Tool - Requirements
+# For authorized penetration testing of web form security
 
 # Core automation framework
 playwright==1.40.0
@@ -7,17 +8,26 @@ aiohttp==3.9.1
 # Configuration and environment
 python-dotenv==1.0.0
 
-# CSV handling (built-in, but listed for clarity)
+# CAPTCHA solving
+2captcha-python==1.2.3
+
+# Proxy management
+aiohttp-socks==0.8.4
+
+# Better error handling and retries
+tenacity==8.2.3
+
+# User agent rotation
+fake-useragent==1.4.0
+
+# CSV handling (built-in)
 # csv (standard library)
 
-# Logging (standard library)
-# logging (standard library)
-
-# Async support (standard library for Python 3.7+)
+# Async support (built-in)
 # asyncio (standard library)
 
-# Optional: For better error handling and retries
-tenacity==8.2.3
+# JSON handling (built-in)
+# json (standard library)
 
 # Development dependencies (optional)
 # pytest==7.4.3

@@ -15,6 +15,7 @@ from form_detector import FormDetector
 from captcha_handler import CaptchaHandler
 from logger_module import setup_logger, SubmissionLogger
 from progress_tracker import ProgressTracker
+from proxy_manager import ProxyManager
 
 # Setup logging
 logger = setup_logger()
@@ -31,12 +32,15 @@ class FormAutomationBot:
         self.config = Config
         self.progress_tracker = ProgressTracker()
         self.captcha_handler = CaptchaHandler(Config.CAPTCHA_API_KEY)
+        self.proxy_manager = ProxyManager(enable_proxies=Config.USE_PROXIES)
 
         # Generate random last names for name field
         self.last_names = [
             'Smith', 'Johnson', 'Williams', 'Brown', 'Jones',
             'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-            'Anderson', 'Taylor', 'Thomas', 'Moore', 'Jackson'
+            'Anderson', 'Taylor', 'Thomas', 'Moore', 'Jackson',
+            'White', 'Harris', 'Martin', 'Thompson', 'Young',
+            'Allen', 'King', 'Wright', 'Scott', 'Green'
         ]
 
     def read_csv(self) -> List[Dict]:
@@ -78,12 +82,74 @@ class FormAutomationBot:
             return True
 
         page = None
+        proxy = None
         try:
-            # Create new page/tab
-            context = await browser.new_context(
-                user_agent=self.config.USER_AGENT,
-                viewport={'width': 1920, 'height': 1080}
-            )
+            # Get proxy if enabled
+            if self.config.PROXY_ROTATION:
+                proxy = await self.proxy_manager.get_proxy()
+                if proxy:
+                    logger.info(f"Using proxy: {proxy['server']}")
+
+            # Randomize user agent if enabled
+            user_agent = self.config.USER_AGENT
+            if self.config.RANDOMIZE_USER_AGENT:
+                user_agent = random.choice(self.config.USER_AGENTS)
+                logger.debug(f"Using user agent: {user_agent[:50]}...")
+
+            # Randomize viewport if enabled
+            viewport = {'width': 1920, 'height': 1080}
+            if self.config.RANDOMIZE_VIEWPORT:
+                viewport = random.choice(self.config.VIEWPORT_SIZES)
+                logger.debug(f"Using viewport: {viewport}")
+
+            # Create new context with advanced stealth
+            context_options = {
+                'user_agent': user_agent,
+                'viewport': viewport,
+                'locale': 'en-US',
+                'timezone_id': 'America/New_York',
+                'permissions': [],
+                'color_scheme': random.choice(['light', 'dark']) if self.config.RANDOMIZE_VIEWPORT else 'light'
+            }
+
+            # Add proxy if available
+            if proxy:
+                context_options['proxy'] = proxy
+
+            context = await browser.new_context(**context_options)
+
+            # Add anti-detection scripts
+            if self.config.WEBDRIVER_DETECTION_EVASION:
+                await context.add_init_script("""
+                    // Override the navigator.webdriver property
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    });
+
+                    // Override plugins to appear more like a real browser
+                    Object.defineProperty(navigator, 'plugins', {
+                        get: () => [1, 2, 3, 4, 5]
+                    });
+
+                    // Override languages
+                    Object.defineProperty(navigator, 'languages', {
+                        get: () => ['en-US', 'en']
+                    });
+
+                    // Chrome runtime
+                    window.chrome = {
+                        runtime: {}
+                    };
+
+                    // Permissions
+                    const originalQuery = window.navigator.permissions.query;
+                    window.navigator.permissions.query = (parameters) => (
+                        parameters.name === 'notifications' ?
+                            Promise.resolve({ state: Notification.permission }) :
+                            originalQuery(parameters)
+                    );
+                """)
+
             page = await context.new_page()
 
             # Navigate to website
@@ -159,7 +225,7 @@ class FormAutomationBot:
                 await page.context.close()
 
     async def _fill_form(self, page: Page, form_data: Dict, contact: Dict) -> bool:
-        """Fill out the contact form"""
+        """Fill out the contact form with human-like behavior"""
         try:
             fields = form_data.get('fields', {})
             city = contact.get('city', '')
@@ -172,30 +238,73 @@ class FormAutomationBot:
 
             logger.info("Filling form fields...")
 
-            # Fill name field
+            # Human-like behavior: sometimes move mouse around first
+            if self.config.EMULATE_HUMAN_BEHAVIOR:
+                await page.mouse.move(
+                    random.randint(100, 500),
+                    random.randint(100, 500)
+                )
+                await page.wait_for_timeout(random.randint(300, 800))
+
+            # Fill name field with typing simulation
             if 'name' in fields:
-                await fields['name'].fill(full_name)
+                await fields['name'].click()
+                await page.wait_for_timeout(random.randint(100, 300))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    # Type like a human (character by character with delays)
+                    await fields['name'].type(full_name, delay=random.randint(50, 150))
+                else:
+                    await fields['name'].fill(full_name)
+
                 logger.debug(f"Filled name: {full_name}")
+                await page.wait_for_timeout(random.randint(200, 500))
 
             # Fill email field
             if 'email' in fields:
-                await fields['email'].fill(self.config.YOUR_EMAIL)
+                await fields['email'].click()
+                await page.wait_for_timeout(random.randint(100, 300))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    await fields['email'].type(self.config.YOUR_EMAIL, delay=random.randint(50, 150))
+                else:
+                    await fields['email'].fill(self.config.YOUR_EMAIL)
+
                 logger.debug(f"Filled email: {self.config.YOUR_EMAIL}")
+                await page.wait_for_timeout(random.randint(200, 500))
 
             # Fill phone field
             if 'phone' in fields:
-                await fields['phone'].fill(self.config.YOUR_PHONE)
+                await fields['phone'].click()
+                await page.wait_for_timeout(random.randint(100, 300))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    await fields['phone'].type(self.config.YOUR_PHONE, delay=random.randint(50, 150))
+                else:
+                    await fields['phone'].fill(self.config.YOUR_PHONE)
+
                 logger.debug(f"Filled phone: {self.config.YOUR_PHONE}")
+                await page.wait_for_timeout(random.randint(200, 500))
 
             # Fill message field
             if 'message' in fields:
-                await fields['message'].fill(message)
+                await fields['message'].click()
+                await page.wait_for_timeout(random.randint(200, 400))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    # For message, type a bit faster (simulating thought process)
+                    await fields['message'].type(message, delay=random.randint(30, 100))
+                else:
+                    await fields['message'].fill(message)
+
                 logger.debug(f"Filled message: {message[:50]}...")
+                await page.wait_for_timeout(random.randint(300, 700))
 
-            # Wait a bit to simulate human behavior
-            await page.wait_for_timeout(random.randint(500, 1500))
+            # Human-like behavior: pause before submitting (like reading over the form)
+            if self.config.EMULATE_HUMAN_BEHAVIOR:
+                await page.wait_for_timeout(random.randint(1000, 2500))
 
-            logger.info("Form filled successfully")
+            logger.info("✓ Form filled successfully")
             return True
 
         except Exception as e:

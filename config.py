@@ -41,6 +41,19 @@ class Config:
     # Parallel Processing
     MAX_WORKERS = int(os.getenv('MAX_WORKERS', '3'))  # Number of parallel browser instances
 
+    # Proxy Settings
+    USE_PROXIES = os.getenv('USE_PROXIES', 'false').lower() == 'true'
+    PROXY_ROTATION = os.getenv('PROXY_ROTATION', 'false').lower() == 'true'
+
+    # Anti-Detection & Fingerprinting Evasion
+    RANDOMIZE_VIEWPORT = os.getenv('RANDOMIZE_VIEWPORT', 'true').lower() == 'true'
+    RANDOMIZE_USER_AGENT = os.getenv('RANDOMIZE_USER_AGENT', 'true').lower() == 'true'
+    EMULATE_HUMAN_BEHAVIOR = os.getenv('EMULATE_HUMAN_BEHAVIOR', 'true').lower() == 'true'
+
+    # Advanced Stealth
+    WEBDRIVER_DETECTION_EVASION = os.getenv('WEBDRIVER_DETECTION_EVASION', 'true').lower() == 'true'
+    CANVAS_FINGERPRINT_RANDOMIZATION = os.getenv('CANVAS_FINGERPRINT_RANDOMIZATION', 'false').lower() == 'true'
+
     # Logging
     LOG_FILE = os.getenv('LOG_FILE', 'automation.log')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
@@ -61,12 +74,31 @@ class Config:
     PHONE_FIELD_KEYWORDS = ['phone', 'telephone', 'tel', 'mobile', 'contact-number', 'number']
     MESSAGE_FIELD_KEYWORDS = ['message', 'comment', 'comments', 'details', 'description', 'inquiry']
 
-    # User Agent
-    USER_AGENT = (
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-        'AppleWebKit/537.36 (KHTML, like Gecko) '
-        'Chrome/120.0.0.0 Safari/537.36'
-    )
+    # User Agents (for rotation)
+    USER_AGENTS = [
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+    ]
+
+    # Default User Agent (if not randomizing)
+    USER_AGENT = USER_AGENTS[0]
+
+    # Viewport sizes for randomization
+    VIEWPORT_SIZES = [
+        {'width': 1920, 'height': 1080},
+        {'width': 1366, 'height': 768},
+        {'width': 1440, 'height': 900},
+        {'width': 1536, 'height': 864},
+        {'width': 1280, 'height': 720},
+    ]
 
     @classmethod
     def validate(cls):
