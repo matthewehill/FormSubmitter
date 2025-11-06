@@ -230,8 +230,16 @@ class FormAutomationBot:
             fields = form_data.get('fields', {})
             city = contact.get('city', '')
 
-            # Generate full name with random last name
-            full_name = f"{self.config.YOUR_NAME} {random.choice(self.last_names)}"
+            # Parse name - if YOUR_NAME contains space, split it; otherwise use random last name
+            name_parts = self.config.YOUR_NAME.split(' ', 1)
+            if len(name_parts) == 2:
+                first_name = name_parts[0]
+                last_name = name_parts[1]
+            else:
+                first_name = self.config.YOUR_NAME
+                last_name = random.choice(self.last_names)
+
+            full_name = f"{first_name} {last_name}"
 
             # Generate message from template
             message = self.config.MESSAGE_TEMPLATE.format(city=city)
@@ -246,8 +254,34 @@ class FormAutomationBot:
                 )
                 await page.wait_for_timeout(random.randint(300, 800))
 
-            # Fill name field with typing simulation
-            if 'name' in fields:
+            # Fill first name field if present
+            if 'first_name' in fields:
+                await fields['first_name'].click()
+                await page.wait_for_timeout(random.randint(100, 300))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    await fields['first_name'].type(first_name, delay=random.randint(50, 150))
+                else:
+                    await fields['first_name'].fill(first_name)
+
+                logger.debug(f"Filled first_name: {first_name}")
+                await page.wait_for_timeout(random.randint(200, 500))
+
+            # Fill last name field if present
+            if 'last_name' in fields:
+                await fields['last_name'].click()
+                await page.wait_for_timeout(random.randint(100, 300))
+
+                if self.config.EMULATE_HUMAN_BEHAVIOR:
+                    await fields['last_name'].type(last_name, delay=random.randint(50, 150))
+                else:
+                    await fields['last_name'].fill(last_name)
+
+                logger.debug(f"Filled last_name: {last_name}")
+                await page.wait_for_timeout(random.randint(200, 500))
+
+            # Fill generic name field if present (and no first/last fields)
+            if 'name' in fields and 'first_name' not in fields and 'last_name' not in fields:
                 await fields['name'].click()
                 await page.wait_for_timeout(random.randint(100, 300))
 

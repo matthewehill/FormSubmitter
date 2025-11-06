@@ -132,10 +132,19 @@ class FormDetector:
             if 'captcha' in field_text or 'recaptcha' in field_text:
                 return None
 
-            # Check for name field
+            # Check for last name field FIRST (more specific)
+            if any(keyword in field_text for keyword in ['last', 'lastname', 'surname', 'family']):
+                if any(keyword in field_text for keyword in self.config.NAME_FIELD_KEYWORDS):
+                    return ('last_name', element)
+
+            # Check for first name field
+            if any(keyword in field_text for keyword in ['first', 'firstname', 'given']):
+                if any(keyword in field_text for keyword in self.config.NAME_FIELD_KEYWORDS):
+                    return ('first_name', element)
+
+            # Check for generic name field (fallback)
             if any(keyword in field_text for keyword in self.config.NAME_FIELD_KEYWORDS):
-                if 'last' not in field_text and 'surname' not in field_text:
-                    return ('name', element)
+                return ('name', element)
 
             # Check for email field
             if any(keyword in field_text for keyword in self.config.EMAIL_FIELD_KEYWORDS):
@@ -145,11 +154,14 @@ class FormDetector:
             if any(keyword in field_text for keyword in self.config.PHONE_FIELD_KEYWORDS):
                 return ('phone', element)
 
-            # Check for message field
+            # Check for message field (more flexible - check textarea or multiline input)
             if any(keyword in field_text for keyword in self.config.MESSAGE_FIELD_KEYWORDS):
-                tag_name = await element.evaluate('el => el.tagName.toLowerCase()')
-                if tag_name == 'textarea' or type_attr == 'textarea':
-                    return ('message', element)
+                return ('message', element)
+
+            # Also check if it's a textarea element (often used for messages)
+            tag_name = await element.evaluate('el => el.tagName.toLowerCase()')
+            if tag_name == 'textarea':
+                return ('message', element)
 
             return None
         except Exception as e:
@@ -163,11 +175,11 @@ class FormDetector:
         # Must have at least email and message, or email and name
         has_email = 'email' in fields
         has_message = 'message' in fields
-        has_name = 'name' in fields
+        has_name = 'name' in fields or 'first_name' in fields or 'last_name' in fields
 
         is_valid = has_email and (has_message or has_name)
 
-        logger.info(f"Form validation: email={has_email}, name={has_name}, message={has_message}, valid={is_valid}")
+        logger.info(f"Form validation: email={has_email}, name/first/last={has_name}, message={has_message}, valid={is_valid}")
 
         return is_valid
 
