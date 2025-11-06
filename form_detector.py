@@ -59,8 +59,16 @@ class FormDetector:
     async def _find_form_on_current_page(self) -> Optional[Dict]:
         """Find forms on the current page"""
         try:
-            # Wait a bit for any lazy-loaded forms
-            await self.page.wait_for_timeout(2000)
+            # Check for Ninja Forms first (they need special handling)
+            ninja_form = await self._detect_and_wait_for_ninja_forms()
+            if ninja_form:
+                logger.info("Detected Ninja Forms, analyzing...")
+                form_data = await self._analyze_form(ninja_form)
+                if form_data and self._is_valid_contact_form(form_data):
+                    return form_data
+
+            # Wait for any lazy-loaded forms (increased from 2s to 5s for heavy JS sites)
+            await self.page.wait_for_timeout(5000)
 
             # Get all forms on the page
             forms = await self.page.query_selector_all('form')
@@ -292,4 +300,61 @@ class FormDetector:
 
         except Exception as e:
             logger.error(f"Error finding modal forms: {e}")
+            return None
+
+    async def _detect_and_wait_for_ninja_forms(self) -> Optional[ElementHandle]:
+        """
+        Detect Ninja Forms and wait for them to fully render
+        Ninja Forms are JavaScript-rendered and need special handling
+        """
+        try:
+            # Check if Ninja Forms is present on the page
+            has_ninja_forms = await self.page.evaluate('''
+                () => {
+                    // Check for Ninja Forms JavaScript variable
+                    if (typeof nfForms !== 'undefined') return true;
+
+                    // Check for Ninja Forms container elements
+                    const nfContainers = document.querySelectorAll('.nf-form-cont, [id*="nf-form-"]');
+                    if (nfContainers.length > 0) return true;
+
+                    // Check for Ninja Forms scripts
+                    const scripts = Array.from(document.scripts);
+                    return scripts.some(s => s.src.includes('nf-front-end'));
+                }
+            ''')
+
+            if not has_ninja_forms:
+                return None
+
+            logger.info("Ninja Forms detected! Waiting for form to render...")
+
+            # Wait for Ninja Forms to fully render (up to 10 seconds)
+            # Look for the actual form element to appear inside the Ninja Forms container
+            try:
+                await self.page.wait_for_selector(
+                    '.nf-form-cont form, [id*="nf-form-"] form',
+                    timeout=10000,
+                    state='visible'
+                )
+                logger.info("Ninja Forms rendered successfully")
+
+                # Get the Ninja Forms form element
+                form = await self.page.query_selector('.nf-form-cont form, [id*="nf-form-"] form')
+                return form
+
+            except Exception as wait_error:
+                logger.warning(f"Ninja Forms detected but form didn't render in time: {wait_error}")
+
+                # Fallback: try to find any form in Ninja Forms containers
+                await self.page.wait_for_timeout(3000)
+                form = await self.page.query_selector('.nf-form-cont form, [id*="nf-form-"] form')
+                if form:
+                    logger.info("Found Ninja Form with fallback method")
+                    return form
+
+                return None
+
+        except Exception as e:
+            logger.debug(f"Error detecting Ninja Forms: {e}")
             return None
